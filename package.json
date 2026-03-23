@@ -1,0 +1,13 @@
+{
+  "name": "brand-connect-hub",
+  "version": "1.0.0",
+  "description": "Two-sided creative services marketplace - Chuka University COMP 465",
+  "scripts": {
+    "setup:db": "psql -U postgres -c \"CREATE DATABASE brand_connect_hub;\" && psql -U postgres -d brand_connect_hub -f database/schema.sql",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start"
+  },
+  "private": true
+}
