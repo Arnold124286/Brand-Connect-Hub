@@ -7,12 +7,13 @@ import { Zap, Building2, Briefcase } from 'lucide-react';
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', userType: 'brand', phone: '', country: 'Kenya' });
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '', userType: 'brand', phone: '', country: 'Kenya' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password.length < 8) return toast.error('Password must be at least 8 characters');
+    if (form.password !== form.confirmPassword) return toast.error('Passwords do not match');
     setLoading(true);
     try {
       await register(form);
@@ -87,6 +88,11 @@ export default function Register() {
             <label className="label">Password</label>
             <input type="password" className="input" placeholder="Min 8 characters" value={form.password}
               onChange={e => setForm({...form, password: e.target.value})} required minLength={8} />
+          </div>
+          <div>
+            <label className="label">Confirm Password</label>
+            <input type="password" className="input" placeholder="Confirm your password" value={form.confirmPassword}
+              onChange={e => setForm({...form, confirmPassword: e.target.value})} required />
           </div>
 
           <button type="submit" disabled={loading}
