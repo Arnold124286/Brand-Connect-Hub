@@ -11,17 +11,26 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import NewProject from './pages/NewProject';
 import ProjectDetail from './pages/ProjectDetail';
+import Transactions from './pages/Transactions';
 import VendorBrowse from './pages/VendorBrowse';
+import MyBids from './pages/MyBids';
 import Marketplace from './pages/Marketplace';
 import Messages from './pages/Messages';
 import AdminDashboard from './pages/AdminDashboard';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
+import Earnings from './pages/Earnings';
+import Landing from './pages/Landing';
+import VerifyOtp from './pages/VerifyOtp';
+import Notifications from './pages/Notifications';
+import Settings from './pages/Settings';
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex h-screen items-center justify-center"><LoadingSpinner text="Loading..." /></div>;
   if (!user) return <Navigate to="/login" replace />;
   return (
-    <div className="flex min-h-screen bg-midnight">
+    <div className="flex min-h-screen bg-[#0A0F1E]">
       <Sidebar />
       <main className="ml-60 flex-1 overflow-y-auto min-h-screen">
         <Outlet />
@@ -48,37 +57,31 @@ function VendorGuard() {
   return <Outlet />;
 }
 
-function PlaceholderPage({ title }) {
-  return (
-    <div className="p-8 animate-fade-in">
-      <h1 className="font-display text-3xl font-bold text-white mb-2">{title}</h1>
-      <p className="text-slate-500">This section is under construction.</p>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
         {/* Public */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
 
         {/* Protected */}
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/notifications" element={<PlaceholderPage title="Notifications" />} />
-          <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings" element={<Settings />} />
 
           {/* Brand routes */}
           <Route element={<BrandGuard />}>
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<NewProject />} />
             <Route path="/vendors" element={<VendorBrowse />} />
-            <Route path="/transactions" element={<PlaceholderPage title="Payments & Escrow" />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/success" element={<PaymentSuccess />} />
+            <Route path="/cancel" element={<PaymentCancel />} />
           </Route>
 
           {/* Shared project detail */}
@@ -87,17 +90,13 @@ export default function App() {
           {/* Vendor routes */}
           <Route element={<VendorGuard />}>
             <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/my-bids" element={<PlaceholderPage title="My Bids" />} />
-            <Route path="/earnings" element={<PlaceholderPage title="Earnings" />} />
+            <Route path="/my-bids" element={<MyBids />} />
+            <Route path="/earnings" element={<Earnings />} />
           </Route>
 
           {/* Admin routes */}
           <Route element={<AdminGuard />}>
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<PlaceholderPage title="User Management" />} />
-            <Route path="/admin/vendors" element={<PlaceholderPage title="Vendor Approvals" />} />
-            <Route path="/admin/projects" element={<PlaceholderPage title="All Projects" />} />
-            <Route path="/admin/transactions" element={<PlaceholderPage title="All Transactions" />} />
           </Route>
         </Route>
 

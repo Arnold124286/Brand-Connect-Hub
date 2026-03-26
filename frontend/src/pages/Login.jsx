@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Zap, Eye, EyeOff } from 'lucide-react';
+import { Zap, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
@@ -26,77 +26,89 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-amber-500/20 via-midnight-50 to-midnight relative overflow-hidden items-center justify-center">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmNTllMGIiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PHBhdGggZD0iTTM2IDM0djZoLTZ2LTZoNnptMC0yMHY2aC02di02aDZ6TTggMTR2Nmgtdjhoos8tNlY4aDZ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        <div className="relative z-10 text-center px-12">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
-              <Zap size={24} className="text-midnight" strokeWidth={2.5} />
-            </div>
-            <span className="font-display text-3xl font-bold text-white">Brand<span className="text-amber-400">Connect</span> Hub</span>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white">
+      <div className="w-full max-w-[400px]">
+        {/* Logo */}
+        <Link to="/" className="flex items-center justify-center gap-2 mb-12">
+          <div className="w-10 h-10 bg-[#14a800] rounded-xl flex items-center justify-center">
+            <Zap size={20} className="text-white" strokeWidth={2.5} />
           </div>
-          <p className="text-slate-300 text-lg leading-relaxed max-w-md">
-            The premier marketplace connecting brands with verified creative service professionals across East Africa.
-          </p>
-          <div className="mt-10 grid grid-cols-3 gap-4 text-center">
-            {[['500+', 'Verified Vendors'], ['1,200+', 'Projects Done'], ['98%', 'Satisfaction']].map(([val, lbl]) => (
-              <div key={lbl} className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="font-display text-2xl font-bold text-amber-400">{val}</div>
-                <div className="text-xs text-slate-400 mt-1">{lbl}</div>
+          <span className="font-display text-2xl font-bold text-[#001e00]">Brand<span className="text-[#14a800]">Connect</span> Hub</span>
+        </Link>
+
+        {/* Form Card */}
+        <div className="bg-white border border-gray-100 rounded-[24px] p-8 md:p-10 shadow-sm border-b-4 border-b-[#14a800]/10">
+          <h1 className="font-display text-3xl font-bold text-[#001e00] mb-2 text-center">Log in</h1>
+          <p className="text-[#5e6d55] mb-8 text-center text-[15px]">Sign in to continue to BrandConnect</p>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-bold text-[#001e00] uppercase tracking-wider ml-1">Email</label>
+              <input 
+                type="email" 
+                className="w-full px-4 py-3 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] focus:ring-1 focus:ring-[#14a800]/20 transition-all font-medium"
+                placeholder="email@example.com"
+                value={form.email} 
+                onChange={e => setForm({...form, email: e.target.value})} 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[13px] font-bold text-[#001e00] uppercase tracking-wider">Password</label>
+                <Link to="/forgot-password" size={13} className="text-[13px] font-bold text-[#14a800] hover:underline">Forgot?</Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-midnight">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-              <Zap size={16} className="text-midnight" strokeWidth={2.5} />
-            </div>
-            <span className="font-display font-bold text-white">Brand<span className="text-amber-400">Connect</span> Hub</span>
-          </div>
-
-          <h1 className="font-display text-3xl font-bold text-white mb-1">Welcome back</h1>
-          <p className="text-slate-500 mb-8">Sign in to your account</p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="label">Email</label>
-              <input type="email" className="input" placeholder="you@company.com"
-                value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
-            </div>
-            <div>
-              <label className="label">Password</label>
               <div className="relative">
-                <input type={showPass ? 'text' : 'password'} className="input pr-10"
-                  placeholder="••••••••" value={form.password}
-                  onChange={e => setForm({...form, password: e.target.value})} required />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                <input 
+                  type={showPass ? 'text' : 'password'} 
+                  className="w-full px-4 py-3 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] focus:ring-1 focus:ring-[#14a800]/20 transition-all font-medium pr-12"
+                  placeholder="••••••••" 
+                  value={form.password}
+                  onChange={e => setForm({...form, password: e.target.value})} 
+                  required 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#14a800] transition-colors"
+                >
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3 disabled:opacity-50">
-              {loading ? <span className="w-4 h-4 border-2 border-midnight border-t-transparent rounded-full animate-spin" /> : null}
-              {loading ? 'Signing in...' : 'Sign In'}
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="bg-[#14a800] hover:bg-[#108a00] text-white font-bold w-full py-4 rounded-full transition-all flex items-center justify-center gap-2 group disabled:opacity-50 mt-4 shadow-lg shadow-[#14a800]/10"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Connect <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
-          <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-            <strong>Demo credentials:</strong> admin@brandconnecthub.com / Admin@BCH2024!
+          <div className="mt-8 pt-8 border-t border-gray-100">
+             <div className="p-4 rounded-2xl bg-[#f2f7f2] border border-[#14a800]/10">
+                <p className="text-[#5e6d55] text-[12px] font-bold uppercase tracking-wider mb-2 text-center">Demo Account</p>
+                <p className="text-[#001e00] text-sm font-medium break-all whitespace-pre-wrap">admin@brandconnecthub.com</p>
+                <p className="text-[#5e6d55] text-xs font-mono mt-1">Admin@BCH2024!</p>
+             </div>
           </div>
+        </div>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
-            New to BCH?{' '}
-            <Link to="/register" className="text-amber-400 hover:text-amber-300 font-semibold">Create account</Link>
-          </p>
+        <p className="mt-10 text-center text-[#5e6d55] font-medium">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-[#14a800] hover:underline font-bold">Sign Up</Link>
+        </p>
+        
+        <div className="mt-12 text-center">
+           <p className="text-[12px] text-gray-400 font-medium">© 2026 Brand Connect Hub Inc.</p>
         </div>
       </div>
     </div>

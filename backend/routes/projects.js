@@ -62,9 +62,12 @@ router.get('/my', authenticate, requireRole('brand'), async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const { rows } = await db.query(
-      `SELECT p.*, u.full_name AS brand_name, u.avatar_url AS brand_avatar
+      `SELECT p.*, u.full_name AS brand_name, u.avatar_url AS brand_avatar,
+              vp.uid AS assigned_vendor_uid,
+              (SELECT id FROM reviews WHERE project_id = p.pid AND reviewer_id = p.brand_id) IS NOT NULL AS has_review
        FROM projects p
        JOIN users u ON u.uid = p.brand_id
+       LEFT JOIN vendor_profiles vp ON vp.id = p.assigned_vendor
        WHERE p.pid = $1`,
       [req.params.id]
     );
@@ -161,6 +164,25 @@ router.get('/:id/matches', authenticate, requireRole('brand'), async (req, res) 
     res.json(ranked.slice(0, 20));
   } catch (err) {
     res.status(500).json({ error: 'Matching failed' });
+  }
+});
+
+// POST /api/projects/:id/flag - Vendor flags a project
+router.post('/:id/flag', authenticate, requireRole('vendor'), async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `UPDATE projects SET is_flagged = TRUE WHERE pid = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Project not found' });
+
+    // Notify brand
+    await db.query(`INSERT INTO notifications (user_id, type, title, message) VALUES ($1,$2,$3,$4)`,
+      [rows[0].brand_id, 'project_flagged', 'Project Flagged!', `A vendor has flagged project "${rows[0].title}" as unpaid or disputed.`]);
+
+    res.json({ message: 'Project flagged successfully', project: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to flag project' });
   }
 });
 

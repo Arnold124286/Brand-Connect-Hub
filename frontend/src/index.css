@@ -2,25 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --upwork-green: #14a800;
+  --upwork-green-hover: #108a00;
+  --upwork-dark: #001e00;
+  --upwork-gray: #5e6d55;
+  --upwork-light-gray: #f2f7f2;
+}
+
 @layer base {
   * { box-sizing: border-box; }
   body {
-    background-color: #0A0F1E;
-    color: #E2E8F0;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    background-color: #ffffff;
+    color: var(--upwork-dark);
+    font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 { font-family: 'Playfair Display', Georgia, serif; }
+  h1, h2, h3, h4 { 
+    font-family: 'Outfit', sans-serif; 
+    color: var(--upwork-dark);
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-amber-500 hover:bg-amber-400 text-midnight font-semibold px-5 py-2.5 rounded-lg
-           transition-all duration-200 font-body text-sm tracking-wide;
+    @apply bg-[var(--upwork-green)] hover:bg-[var(--upwork-green-hover)] text-white font-bold px-6 py-3 rounded-full
+           transition-all duration-200 text-base tracking-tight shadow-sm;
   }
   .btn-secondary {
-    @apply border border-slate-600 hover:border-amber-500 text-slate-300 hover:text-amber-400
-           font-semibold px-5 py-2.5 rounded-lg transition-all duration-200 font-body text-sm;
+    @apply border-2 border-[var(--upwork-green)] text-[var(--upwork-green)] hover:bg-[var(--upwork-green)] hover:text-white
+           font-bold px-6 py-3 rounded-full transition-all duration-200 text-base;
   }
   .card {
     @apply bg-[#141929] border border-slate-800 rounded-xl p-6 transition-all duration-200;

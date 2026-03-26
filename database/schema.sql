@@ -28,6 +28,7 @@ CREATE TABLE brand_profiles (
     company_size VARCHAR(50),
     website      TEXT,
     description  TEXT,
+    wallet_balance NUMERIC(12,2) DEFAULT 0.00,
     created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -45,6 +46,7 @@ CREATE TABLE vendor_profiles (
     avg_rating        NUMERIC(3,2) DEFAULT 0.00,
     total_reviews     INT DEFAULT 0,
     total_earnings    NUMERIC(12,2) DEFAULT 0.00,
+    credits           NUMERIC(10,2) DEFAULT 10.00,
     created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -89,6 +91,7 @@ CREATE TABLE projects (
     status         VARCHAR(30) DEFAULT 'open'
                    CHECK (status IN ('open', 'in_review', 'in_progress', 'completed', 'cancelled', 'disputed')),
     assigned_vendor UUID REFERENCES vendor_profiles(id),
+    is_flagged     BOOLEAN DEFAULT FALSE,
     created_at     TIMESTAMPTZ DEFAULT NOW(),
     updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
@@ -168,6 +171,16 @@ CREATE TABLE notifications (
     meta        JSONB,
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE otp_codes (
+    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email      VARCHAR(255) NOT NULL,
+    otp        VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_otp_email ON otp_codes(email);
 
 CREATE TABLE service_categories (
     id          SERIAL PRIMARY KEY,

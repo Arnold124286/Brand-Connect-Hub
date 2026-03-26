@@ -16,7 +16,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/payments/webhook') {
+    next();
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
@@ -38,6 +44,8 @@ app.use('/api/messages',      require('./routes/messages'));
 app.use('/api/transactions',  require('./routes/transactions'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/admin',         require('./routes/admin'));
+app.use('/api/payments',      require('./routes/payments'));
+app.use('/api/reviews',       require('./routes/reviews'));
 
 // ── Categories ─────────────────────────────────────────────────────
 app.get('/api/categories', async (req, res) => {

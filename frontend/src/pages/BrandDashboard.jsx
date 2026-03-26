@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import CalendarView from '../components/CalendarView';
 
 const STATUS_COLORS = {
   open:        'badge-blue',
@@ -71,6 +72,7 @@ export default function BrandDashboard() {
           {[
             { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={15} /> },
             { id: 'projects', label: 'My Projects', icon: <FolderOpen size={15} /> },
+            { id: 'wallet',   label: 'Wallet', icon: <DollarSign size={15} /> },
             { id: 'notifications', label: 'Notifications', icon: <Bell size={15} /> },
           ].map(t => (
             <button
@@ -126,7 +128,51 @@ export default function BrandDashboard() {
           </div>
         )}
 
-        {/* ── PROJECTS TAB ── */}
+        {/* ── WALLET TAB ── */}
+        {tab === 'wallet' && (
+          <div className="animate-fade-in space-y-6">
+            <div className="bg-brand-600 rounded-3xl p-8 text-white relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-brand-100 text-sm font-semibold uppercase tracking-wider mb-2">Available Balance</p>
+                <h2 className="text-5xl font-display font-bold">KES {parseFloat(user.wallet_balance || 0).toLocaleString()}</h2>
+                
+                <div className="flex gap-4 mt-8">
+                  <button 
+                    onClick={() => {
+                      const amount = prompt('Enter amount to fund (KES):');
+                      if (amount && !isNaN(amount)) {
+                        api.post('/payments/deposit', { amount: parseFloat(amount) })
+                          .then(r => {
+                            toast.success(`Wallet funded! New balance: KES ${r.data.balance}`);
+                            window.location.reload(); // Quick refresh to update user context
+                          })
+                          .catch(() => toast.error('Failed to fund wallet'));
+                      }
+                    }}
+                    className="bg-white text-brand-700 px-6 py-3 rounded-xl font-bold hover:bg-brand-50 transition-all flex items-center gap-2"
+                  >
+                    <Plus size={18} /> Fund Wallet
+                  </button>
+                </div>
+              </div>
+              <DollarSign size={120} className="absolute -right-8 -bottom-8 text-brand-500/30 rotate-12" />
+            </div>
+
+            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-display font-bold text-lg text-[#001e00]">Recent Transactions</h3>
+                <Link to="/transactions" className="text-sm font-bold text-[#14a800] hover:underline">View All</Link>
+              </div>
+              <div className="divide-y divide-gray-50">
+                <div className="p-12 text-center text-[#5e6d55]">
+                  <DollarSign size={40} className="mx-auto mb-4 opacity-10" />
+                  <p className="font-bold text-[#001e00]">No transactions yet</p>
+                  <p className="text-sm opacity-70">Your payment history will appear here once you fund your wallet or pay for projects.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {tab === 'projects' && (
           <div className="animate-fade-in">
             <div className="space-y-3">
@@ -183,6 +229,17 @@ export default function BrandDashboard() {
           </div>
         )}
       </div>
+      <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-gray-100 mt-20">
+         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <span className="text-xl font-display font-bold text-[#001e00]">Brand<span className="text-[#14a800]">Connect</span></span>
+            <p className="text-sm text-gray-400 font-medium">© 2026 Brand Connect Hub Inc. All rights reserved.</p>
+            <div className="flex gap-8 text-sm font-bold text-[#5e6d55]">
+               <a href="#" className="hover:text-[#14a800]">Privacy</a>
+               <a href="#" className="hover:text-[#14a800]">Terms</a>
+               <a href="#" className="hover:text-[#14a800]">Help</a>
+            </div>
+         </div>
+      </footer>
     </div>
   );
 }

@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { projectsAPI, bidsAPI, transactionsAPI } from '../utils/api';
+import { projectsAPI, bidsAPI, paymentsAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Clock, DollarSign, Users, Star, Send, CheckCircle } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { ArrowLeft, Clock, DollarSign, Users, Star, Send, CheckCircle, Flag, MessageCircle } from 'lucide-react';
+import { formatDistanceToNow, format, isValid } from 'date-fns';
+
+const safeFormat = (d, str) => {
+  const dateStr = d ? new Date(d) : null;
+  return dateStr && isValid(dateStr) ? format(dateStr, str) : 'Invalid Date';
+};
+
+const safeFormatDist = (d) => {
+  const dateStr = d ? new Date(d) : null;
+  return dateStr && isValid(dateStr) ? formatDistanceToNow(dateStr, { addSuffix: true }) : 'Unknown';
+};
 
 const STATUS_BADGE = {
   open: 'badge-amber', in_progress: 'badge-blue', completed: 'badge-green',
@@ -41,13 +51,69 @@ export default function ProjectDetail() {
     } finally { setSubmitting(false); }
   };
 
-  const acceptBid = async (bidId) => {
+  const acceptBid = async (bid) => {
     try {
-      await bidsAPI.accept(bidId);
-      toast.success('Bid accepted! Project is now in progress.');
+      const { data } = await paymentsAPI.createCheckoutSession({
+        projectId: id,
+        vendorId: bid.vendor_id,
+        amount: bid.bid_amount,
+        bidId: bid.id
+      });
+      toast.loading('Redirecting to Stripe...', { duration: 2000 });
+      window.location.href = data.url;
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to initiate payment');
+    }
+  };
+
+  const payWithWallet = async (bid) => {
+    if (!window.confirm(`Pay KES ${bid.bid_amount} from your wallet?`)) return;
+    if (parseFloat(user.wallet_balance) < parseFloat(bid.bid_amount)) {
+      return toast.error('Insufficient wallet balance. Please fund your wallet.');
+    }
+
+    try {
+      await api.post('/payments/pay-from-wallet', {
+        projectId: id,
+        vendorId: bid.vendor_id,
+        amount: bid.bid_amount,
+        bidId: bid.id
+      });
+      toast.success('Payment successful! Project is now in progress.');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to accept bid');
+      toast.error(err.response?.data?.error || 'Payment failed');
+    }
+  };
+
+  const flagProject = async () => {
+    if (!window.confirm('Are you sure you want to flag this project? This will notify the brand.')) return;
+    try {
+      await projectsAPI.post(`/${id}/flag`);
+      toast.success('Project flagged.');
+      load();
+    } catch (err) {
+      toast.error('Failed to flag project');
+    }
+  };
+
+  const submitReview = async () => {
+    const rating = prompt('Enter rating (1-5):');
+    if (!rating || isNaN(rating) || rating < 1 || rating > 5) return toast.error('Invalid rating');
+    const comment = prompt('Enter a comment (optional):');
+    
+    try {
+      await api.post('/reviews', {
+        projectId: id,
+        reviewerId: user.uid,
+        revieweeId: project.assigned_vendor_uid,
+        rating: parseInt(rating),
+        comment: comment || ''
+      });
+      toast.success('Review submitted! Vendor credits updated.');
+      load();
+    } catch (err) {
+      toast.error('Failed to submit review');
     }
   };
 
@@ -86,7 +152,7 @@ export default function ProjectDetail() {
               {project.deadline && (
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <Clock size={15} className="text-blue-400" />
-                  <span>Due {format(new Date(project.deadline), 'MMM d, yyyy')}</span>
+                  <span>Due {safeFormat(project.deadline, 'MMM d, yyyy')}</span>
                 </div>
               )}
               <div className="flex items-center gap-1.5 text-slate-400">
@@ -94,6 +160,24 @@ export default function ProjectDetail() {
                 <span>{project.bids?.length ?? 0} bids received</span>
               </div>
             </div>
+
+            {/* Actions for Vendor */}
+            {isVendor && project.assigned_vendor_uid === user.uid && !project.is_flagged && (
+              <div className="flex gap-3 mt-4">
+                <button onClick={flagProject} className="btn-secondary text-red-400 border-red-400/30 bg-red-400/5 flex items-center gap-2">
+                  <Flag size={14} /> Flag as Unpaid
+                </button>
+              </div>
+            )}
+
+            {/* Actions for Brand */}
+            {isOwner && project.status === 'completed' && !project.has_review && (
+              <div className="flex gap-3 mt-4">
+                <button onClick={submitReview} className="btn-primary flex items-center gap-2">
+                  <Star size={14} /> Review Vendor
+                </button>
+              </div>
+            )}
 
             {project.skills_required?.length > 0 && (
               <div className="mt-4">
@@ -137,9 +221,14 @@ export default function ProjectDetail() {
                       {b.status === 'accepted' ? (
                         <span className="badge-green mt-3 inline-flex items-center gap-1"><CheckCircle size={11} /> Accepted</span>
                       ) : project.status === 'open' ? (
-                        <button onClick={() => acceptBid(b.id)} className="btn-primary mt-3 text-xs py-1.5 px-4">
-                          Accept This Bid
-                        </button>
+                        <div className="flex gap-2 mt-3">
+                          <button onClick={() => acceptBid(b)} className="btn-primary text-xs py-1.5 px-3">
+                            Pay with Stripe
+                          </button>
+                          <button onClick={() => payWithWallet(b)} className="btn-secondary border-brand-500 text-brand-500 hover:bg-brand-500/10 text-xs py-1.5 px-3 font-bold">
+                            Pay with Wallet
+                          </button>
+                        </div>
                       ) : null}
                     </div>
                   ))}
@@ -207,7 +296,7 @@ export default function ProjectDetail() {
             {project.industry && <div className="flex justify-between"><span className="text-slate-500">Industry</span><span className="text-slate-200">{project.industry}</span></div>}
             <div className="flex justify-between"><span className="text-slate-500">Type</span><span className="text-slate-200 capitalize">{project.budget_type}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Posted</span>
-              <span className="text-slate-200">{formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}</span>
+              <span className="text-slate-200">{safeFormatDist(project.created_at)}</span>
             </div>
           </div>
         </div>

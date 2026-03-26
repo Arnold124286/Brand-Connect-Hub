@@ -48,6 +48,7 @@ export const projectsAPI = {
 export const bidsAPI = {
   submit: (data) => api.post('/bids', data),
   accept: (id) => api.patch(`/bids/${id}/accept`),
+  withdraw: (id) => api.patch(`/bids/${id}/withdraw`),
   myBids: () => api.get('/bids/my'),
 };
 
@@ -71,6 +72,11 @@ export const transactionsAPI = {
   create: (data) => api.post('/transactions', data),
   release: (tid) => api.patch(`/transactions/${tid}/release`),
   my: () => api.get('/transactions/my'),
+};
+
+// ── Payments ─────────────────────────────────────────────────────
+export const paymentsAPI = {
+  createCheckoutSession: (data) => api.post('/payments/create-checkout-session', data),
 };
 
 // ── Notifications ────────────────────────────────────────────────
