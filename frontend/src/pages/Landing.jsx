@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 
 const CATEGORIES = [
-  { name: 'Development & IT',   icon: '💻', count: '1,200+ vendors' },
-  { name: 'Design & Creative',  icon: '🎨', count: '850+ vendors' },
-  { name: 'Sales & Marketing',  icon: '📈', count: '640+ vendors' },
-  { name: 'Writing & Translation', icon: '✍️', count: '410+ vendors' },
-  { name: 'Admin & Customer Support', icon: '🎧', count: '320+ vendors' },
-  { name: 'Finance & Accounting', icon: '💰', count: '180+ vendors' },
+  { name: 'Advertising',       icon: '📢', count: '450+ pro talent' },
+  { name: 'Content Creation', icon: '📝', count: '820+ creators' },
+  { name: 'Digital Marketing', icon: '🚀', count: '640+ experts' },
+  { name: 'Graphic Design',    icon: '🎨', count: '910+ designers' },
+  { name: 'Photography',      icon: '📸', count: '320+ photographers' },
+  { name: 'Public Relations',  icon: '🤝', count: '180+ specialists' },
+  { name: 'Video & Animation', icon: '🎬', count: '540+ editors' },
+  { name: 'Web Development',   icon: '💻', count: '1,200+ developers' },
 ];
 
 const SOCIAL_LINKS = [

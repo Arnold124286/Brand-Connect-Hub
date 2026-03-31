@@ -93,13 +93,6 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-gray-100">
-             <div className="p-4 rounded-2xl bg-[#f2f7f2] border border-[#14a800]/10">
-                <p className="text-[#5e6d55] text-[12px] font-bold uppercase tracking-wider mb-2 text-center">Demo Account</p>
-                <p className="text-[#001e00] text-sm font-medium break-all whitespace-pre-wrap">admin@brandconnecthub.com</p>
-                <p className="text-[#5e6d55] text-xs font-mono mt-1">Admin@BCH2024!</p>
-             </div>
-          </div>
         </div>
 
         <p className="mt-10 text-center text-[#5e6d55] font-medium">
