@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: `${import.meta.env.VITE_API_URL || ''}/api`,
   timeout: 15000,
 });
 
@@ -95,6 +95,7 @@ export const adminAPI = {
   toggleUser: (uid) => api.patch(`/admin/users/${uid}/toggle`),
 };
 
+// ── Categories ───────────────────────────────────────────────────
 export const categoriesAPI = {
   list: () => api.get('/categories'),
 };
