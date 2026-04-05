@@ -32,11 +32,11 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (data) => {
     const res = await authAPI.register(data);
-    const { token, user } = res.data;
+    const { token, user, devOtp, devNote } = res.data;
     localStorage.setItem('bch_token', token);
     localStorage.setItem('bch_user', JSON.stringify(user));
     setUser(user);
-    return user;
+    return { user, devOtp, devNote };
   }, []);
 
   const logout = useCallback(() => {

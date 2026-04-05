@@ -12,13 +12,17 @@ export default function VerifyOtp() {
   const [email, setEmail] = useState('');
 
   useEffect(() => {
+    // Register.jsx navigates with { state: { email } }, so check state first
+    const stateEmail = location.state?.email;
     const params = new URLSearchParams(location.search);
     const emailParam = params.get('email');
-    if (!emailParam) {
+    const resolvedEmail = stateEmail || emailParam;
+
+    if (!resolvedEmail) {
       toast.error('Missing email for verification');
       navigate('/register');
     } else {
-      setEmail(emailParam);
+      setEmail(resolvedEmail);
     }
   }, [location, navigate]);
 
@@ -31,6 +35,16 @@ export default function VerifyOtp() {
     // Auto focus next
     if (value && index < 5) {
       document.getElementById(`otp-${index + 1}`).focus();
+    }
+  };
+
+  // Handle paste — fill all 6 boxes at once
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length === 6) {
+      setOtp(pasted.split(''));
+      document.getElementById('otp-5')?.focus();
     }
   };
 
@@ -78,10 +92,12 @@ export default function VerifyOtp() {
                 key={i}
                 id={`otp-${i}`}
                 type="text"
+                inputMode="numeric"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
+                onPaste={i === 0 ? handlePaste : undefined}
                 className="w-12 h-14 text-center text-2xl font-bold bg-surface-50 border-2 border-surface-100 rounded-xl focus:border-brand-600 focus:bg-white outline-none transition-all"
                 required
               />

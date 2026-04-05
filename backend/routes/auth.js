@@ -22,54 +22,86 @@ router.post('/register', [
   body('fullName').notEmpty(),
   body('userType').isIn(['brand', 'vendor']),
 ], async (req, res) => {
+  console.log('📍 Registration endpoint hit');
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty()) {
+    console.log('❌ Validation errors:', errors.array());
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-  const { email, password, fullName, userType, phone, country } = req.body;
+  const { email, password, fullName, userType, phone, registrationNumber, country } = req.body;
+  console.log('📝 Request data:', { email, fullName, userType, phone });
   try {
+    console.log('🔍 Checking if email exists...');
     const exists = await db.query('SELECT uid FROM users WHERE email=$1', [email]);
+    console.log('✅ Email check completed');
     if (exists.rows.length) return res.status(409).json({ error: 'Email already registered' });
 
+    console.log('🔐 Hashing password...');
     const hash = await bcrypt.hash(password, 12);
+    console.log('✅ Password hashed');
+    
+    console.log('💾 Inserting user into database...');
     const { rows } = await db.query(
-      `INSERT INTO users (email, password_hash, full_name, user_type, phone, country, is_verified)
-       VALUES ($1,$2,$3,$4,$5,$6, FALSE) RETURNING uid, email, full_name, user_type`,
-      [email, hash, fullName, userType, phone || null, country || 'Kenya']
+      `INSERT INTO users (email, password_hash, full_name, user_type, phone, registration_number, country, is_verified)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, FALSE) RETURNING uid, email, full_name, user_type`,
+      [email, hash, fullName, userType, phone || null, registrationNumber || null, country || 'Kenya']
     );
+    console.log('✅ User inserted:', rows[0].email);
     const user = rows[0];
 
     // Create profile
     if (userType === 'brand') {
+      console.log('👤 Creating brand profile...');
       await db.query('INSERT INTO brand_profiles (uid) VALUES ($1)', [user.uid]);
+      console.log('✅ Brand profile created');
     } else {
+      console.log('👤 Creating vendor profile...');
       await db.query('INSERT INTO vendor_profiles (uid) VALUES ($1)', [user.uid]);
+      console.log('✅ Vendor profile created');
     }
 
     // Generate OTP
+    console.log('📧 Generating OTP...');
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    console.log('🔐 OTP Generated:', otp);
 
+    console.log('💾 Saving OTP to database...');
     await db.query(
       'INSERT INTO otp_codes (email, otp, expires_at) VALUES ($1, $2, $3)',
       [email, otp, expiresAt]
     );
+    console.log('✅ OTP saved');
 
-    // Send email
-    await sendOTPEmail(email, otp);
+    // Send email asynchronously so registration is not blocked by SMTP issues
+    console.log('📬 Queuing OTP email...');
+    sendOTPEmail(email, otp)
+      .then(() => console.log('✅ Email sent successfully'))
+      .catch((e) => console.error('sendOTPEmail error:', e.message));
 
+    console.log('🔑 Generating JWT token...');
     const token = jwt.sign(
       { uid: user.uid, email: user.email, userType: user.user_type },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
+    console.log('✅ Token generated');
 
+    // In dev mode (no real email configured), return OTP in response
+    const isDevMode = !process.env.EMAIL_USER || 
+      process.env.EMAIL_USER === 'your-email@gmail.com' ||
+      process.env.EMAIL_PASS === 'your-app-password';
+
+    console.log('✅ Sending success response...');
     res.status(201).json({ 
       token, 
       user: { uid: user.uid, email: user.email, fullName: user.full_name, userType: user.user_type, isVerified: false },
-      message: 'Registration successful. Please verify your email with the OTP sent.'
+      message: 'Registration successful. Please verify your email with the OTP sent.',
+      ...(isDevMode && { devOtp: otp, devNote: 'DEV MODE: Email not configured. Use this OTP to verify.' })
     });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Registration failed:', err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
@@ -138,7 +170,10 @@ router.post('/login', [
 
 // GET /api/auth/me
 router.get('/me', authenticate, async (req, res) => {
+  console.log('📍 /api/auth/me called');
+  console.log('🔑 Authenticated user:', req.user);
   try {
+    console.log('🔍 Running profile query for uid:', req.user.uid);
     const { rows } = await db.query(
       `SELECT u.uid, u.email, u.full_name, u.user_type, u.phone, u.avatar_url, u.is_verified, u.created_at,
               bp.company_name, bp.industry AS brand_industry, bp.wallet_balance,
@@ -149,9 +184,11 @@ router.get('/me', authenticate, async (req, res) => {
        WHERE u.uid = $1`,
       [req.user.uid]
     );
+    console.log('✅ Profile query returned rows:', rows.length);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);
   } catch (err) {
+    console.error('❌ /api/auth/me failed:', err);
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 });

@@ -12,6 +12,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     full_name    VARCHAR(255) NOT NULL,
     phone        VARCHAR(50),
+    registration_number VARCHAR(100),
     country      VARCHAR(100) DEFAULT 'Kenya',
     avatar_url   TEXT,
     is_verified  BOOLEAN DEFAULT FALSE,
