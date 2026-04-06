@@ -88,8 +88,10 @@ router.post('/register', [
     );
     console.log('✅ Token generated');
 
-    // In dev mode (for local testing + bypassing ISP SMTP blocks), always return OTP in response
-    const isDevMode = process.env.NODE_ENV === 'development';
+    // In dev mode (no real email configured), return OTP in response
+    const isDevMode = !process.env.EMAIL_USER || 
+      process.env.EMAIL_USER === 'your-email@gmail.com' ||
+      process.env.EMAIL_PASS === 'your-app-password';
 
     console.log('✅ Sending success response...');
     res.status(201).json({ 
