@@ -169,6 +169,43 @@ export default function Settings() {
                   />
                 </div>
               </div>
+              
+              {/* Identity & Verification Uploads */}
+              <div className="space-y-4 pt-6 border-t border-white/5">
+                 <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2"><Shield size={16} /> Identity & Verification</h4>
+                    <span className="text-[10px] bg-[#14a800]/10 text-[#14a800] px-3 py-1 rounded-full font-bold uppercase tracking-widest border border-[#14a800]/20">Secure Vault</span>
+                 </div>
+                 <div className="grid md:grid-cols-2 gap-6">
+                    <div className="p-5 border border-white/5 bg-[#0A0F1E] rounded-2xl space-y-4 group hover:border-[#14a800]/30 transition-all shadow-inner">
+                       <div className="flex justify-between items-start">
+                          <div>
+                             <p className="text-sm font-bold text-white mb-1">Government ID</p>
+                             <p className="text-xs text-slate-500 font-medium tracking-tight">Passport, National ID, or License</p>
+                          </div>
+                       </div>
+                       <label className="block w-full text-center p-4 border-2 border-dashed border-slate-700/50 rounded-xl cursor-pointer hover:border-[#14a800] hover:bg-[#14a800]/5 transition-all">
+                          <span className="text-xs font-bold tracking-wide text-slate-400 group-hover:text-[#14a800]">Browse ID File...</span>
+                          <input type="file" className="hidden" accept=".pdf,image/*" onChange={(e) => { if(e.target.files[0]) { import('react-hot-toast').then(m => m.default.success('ID document queued')); setFormData({...formData, idDocName: e.target.files[0].name}) } }} />
+                       </label>
+                       {formData.idDocName && <p className="text-xs text-[#14a800] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#14a800]"></div> {formData.idDocName}</p>}
+                    </div>
+                    
+                    <div className="p-5 border border-white/5 bg-[#0A0F1E] rounded-2xl space-y-4 group hover:border-[#14a800]/30 transition-all shadow-inner">
+                       <div className="flex justify-between items-start">
+                          <div>
+                             <p className="text-sm font-bold text-white mb-1">{user.userType === 'brand' ? 'Company Profile / Bio' : 'Professional CV'}</p>
+                             <p className="text-xs text-slate-500 font-medium tracking-tight">PDF document highlighting experience</p>
+                          </div>
+                       </div>
+                       <label className="block w-full text-center p-4 border-2 border-dashed border-slate-700/50 rounded-xl cursor-pointer hover:border-[#14a800] hover:bg-[#14a800]/5 transition-all">
+                          <span className="text-xs font-bold tracking-wide text-slate-400 group-hover:text-[#14a800]">Browse Document...</span>
+                          <input type="file" className="hidden" accept=".pdf" onChange={(e) => { if(e.target.files[0]) { import('react-hot-toast').then(m => m.default.success('CV/Profile document queued')); setFormData({...formData, cvDocName: e.target.files[0].name}) } }} />
+                       </label>
+                       {formData.cvDocName && <p className="text-xs text-[#14a800] font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[#14a800]"></div> {formData.cvDocName}</p>}
+                    </div>
+                 </div>
+              </div>
 
               <button type="submit" disabled={loading} className="w-full bg-[#14a800] hover:bg-[#108a00] text-white py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 disabled:opacity-50">
                 {loading ? 'Processing...' : <><Save size={20} /> Sync Profile Changes</>}

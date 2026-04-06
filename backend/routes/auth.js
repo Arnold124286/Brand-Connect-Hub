@@ -88,10 +88,8 @@ router.post('/register', [
     );
     console.log('✅ Token generated');
 
-    // In dev mode (no real email configured), return OTP in response
-    const isDevMode = !process.env.EMAIL_USER || 
-      process.env.EMAIL_USER === 'your-email@gmail.com' ||
-      process.env.EMAIL_PASS === 'your-app-password';
+    // In dev mode (for local testing + bypassing ISP SMTP blocks), always return OTP in response
+    const isDevMode = process.env.NODE_ENV === 'development';
 
     console.log('✅ Sending success response...');
     res.status(201).json({ 
@@ -186,7 +184,31 @@ router.get('/me', authenticate, async (req, res) => {
     );
     console.log('✅ Profile query returned rows:', rows.length);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
+
+    const row = rows[0];
+    // Map snake_case DB columns → camelCase to match what register/login return
+    // (frontend checks user.userType, user.fullName, etc. everywhere)
+    res.json({
+      uid:              row.uid,
+      email:            row.email,
+      fullName:         row.full_name,
+      userType:         row.user_type,
+      phone:            row.phone,
+      avatarUrl:        row.avatar_url,
+      isVerified:       row.is_verified,
+      createdAt:        row.created_at,
+      // Brand fields
+      companyName:      row.company_name,
+      brandIndustry:    row.brand_industry,
+      walletBalance:    row.wallet_balance,
+      // Vendor fields
+      vendorProfileId:  row.vendor_profile_id,
+      bio:              row.bio,
+      specializations:  row.specializations,
+      avgRating:        row.avg_rating,
+      verificationStatus: row.verification_status,
+      credits:          row.credits,
+    });
   } catch (err) {
     console.error('❌ /api/auth/me failed:', err);
     res.status(500).json({ error: 'Failed to fetch profile' });
