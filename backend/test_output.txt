@@ -1,2 +1,0 @@
-Sending email from luxbrands46@gmail.com
-Γ¥î Failed to send: Connection timeout

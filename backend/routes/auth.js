@@ -12,26 +12,40 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@
 
 // ─── POST /api/auth/register ─────────────────────────────────────────────────
 router.post('/register', [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
   body('password').custom((value) => {
     if (!PASSWORD_REGEX.test(value)) {
       throw new Error('Password must be at least 8 characters, include uppercase, lowercase, number, and special character');
     }
     return true;
-  }),
-  body('fullName').notEmpty(),
-  body('userType').isIn(['brand', 'vendor']),
+  }).withMessage('Invalid password format'),
+  body('fullName').trim().notEmpty().withMessage('Full name is required'),
+  body('userType').isIn(['brand', 'vendor']).withMessage('User type must be brand or vendor'),
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
 ], async (req, res) => {
   console.log('📍 Registration endpoint hit');
+  console.log('📝 Request body:', {
+    email: req.body.email,
+    fullName: req.body.fullName,
+    userType: req.body.userType,
+    phone: req.body.phone,
+    registrationNumber: req.body.registrationNumber,
+  });
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.log('❌ Validation errors:', errors.array());
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ 
+      error: 'Validation failed',
+      errors: errors.array().map(e => ({
+        field: e.param,
+        message: e.msg
+      }))
+    });
   }
 
   const { email, password, fullName, userType, phone, registrationNumber, country } = req.body;
-  console.log('📝 Request data:', { email, fullName, userType, phone });
+  console.log('📝 Extracted fields:', { email, password: '***', fullName, userType, phone, registrationNumber, country });
 
   try {
     // Check if email exists
@@ -115,8 +129,15 @@ router.post('/register', [
       }),
     });
   } catch (err) {
-    console.error('❌ Registration failed:', err);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('❌ Registration failed:', err.message, err);
+    // Check for specific database errors
+    if (err.code === '23505') { // Unique constraint violation (duplicate email)
+      return res.status(409).json({ error: 'An account with this email already exists.' });
+    }
+    if (err.message && err.message.includes('phone')) {
+      return res.status(400).json({ error: 'Phone number is invalid or missing.' });
+    }
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 });
 

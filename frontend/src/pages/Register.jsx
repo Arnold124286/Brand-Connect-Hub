@@ -43,6 +43,18 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const missingFields = [];
+    if (!form.fullName.trim()) missingFields.push('Full name');
+    if (!form.email.trim()) missingFields.push('Email address');
+    if (!form.password) missingFields.push('Password');
+    if (!form.confirmPassword) missingFields.push('Confirm password');
+    if (!form.phoneNumber.trim()) missingFields.push('Phone number');
+
+    if (missingFields.length) {
+      return toast.error(`${missingFields.join(', ')} ${missingFields.length === 1 ? 'is' : 'are'} required`);
+    }
+
     if (form.password !== form.confirmPassword) {
       return toast.error('Passwords do not match');
     }
@@ -60,7 +72,16 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const result = await register({ ...form, phone: form.phoneNumber });
+      const payload = {
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        userType: form.userType,
+        phone: form.phoneNumber.trim(),
+        registrationNumber: form.registrationNumber.trim(),
+      };
+      console.log('📤 Sending registration payload:', payload);
+      const result = await register(payload);
       if (result.devOtp) {
         // Dev mode: email not configured, show OTP in UI
         setDevOtp(result.devOtp);
@@ -70,7 +91,35 @@ export default function Register() {
         navigate('/verify-otp', { state: { email: form.email } });
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Registration failed');
+      const apiError = err.response?.data?.error;
+      const apiErrors = err.response?.data?.errors;
+      
+      console.error('🔴 Full error response:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        error: apiError,
+        errors: apiErrors,
+        message: err.message,
+        fullError: err
+      });
+      
+      let errorMessage = 'Registration failed';
+      
+      // Handle validation errors array
+      if (Array.isArray(apiErrors) && apiErrors.length > 0) {
+        // Check if errors have 'message' field (from new format) or 'msg' field (from old format)
+        const errorMessages = apiErrors.map((e) => {
+          if (typeof e === 'object') {
+            return e.message || e.msg || String(e);
+          }
+          return String(e);
+        });
+        errorMessage = errorMessages.join(' | ');
+      } else if (apiError) {
+        errorMessage = apiError;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -137,7 +186,7 @@ export default function Register() {
         <div className="bg-white border border-gray-100 rounded-[32px] p-8 md:p-12 shadow-sm border-b-4 border-[#14a800]/10">
           <h1 className="font-display text-3xl font-bold text-[#001e00] mb-2 text-center tracking-tight">Create your account</h1>
           
-          <form onSubmit={handleSubmit} className="mt-10 space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="mt-10 space-y-6">
             {/* Tab Navigation */}
             <div className="flex p-1.5 bg-gray-50 rounded-2xl mb-8 border border-gray-100">
               <button
@@ -200,6 +249,8 @@ export default function Register() {
                   <div className="space-y-1">
                     <label className="text-[12px] font-bold text-[#5e6d55] uppercase tracking-wider ml-1">Full Name</label>
                     <input
+                      name="fullName"
+                      autoComplete="name"
                       type="text"
                       className="w-full px-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium"
                       placeholder="Janardan Singh"
@@ -212,6 +263,8 @@ export default function Register() {
                   <div className="space-y-1">
                     <label className="text-[12px] font-bold text-[#5e6d55] uppercase tracking-wider ml-1">Email Address</label>
                     <input
+                      name="email"
+                      autoComplete="email"
                       type="email"
                       className="w-full px-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium"
                       placeholder="user@example.com"
@@ -226,6 +279,8 @@ export default function Register() {
                        <label className="text-[12px] font-bold text-[#5e6d55] uppercase tracking-wider ml-1">Password</label>
                        <div className="relative">
                          <input
+                           name="password"
+                           autoComplete="new-password"
                            type={showPassword ? "text" : "password"}
                            className="w-full px-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium pr-12"
                            placeholder="••••••••"
@@ -265,6 +320,8 @@ export default function Register() {
                        <label className="text-[12px] font-bold text-[#5e6d55] uppercase tracking-wider ml-1">Repeat Password</label>
                        <div className="relative">
                          <input
+                           name="confirmPassword"
+                           autoComplete="new-password"
                            type={showConfirmPassword ? "text" : "password"}
                            className="w-full px-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium pr-12"
                            placeholder="••••••••"
@@ -307,6 +364,8 @@ export default function Register() {
                         <Phone size={18} />
                       </div>
                       <input
+                        name="phoneNumber"
+                        autoComplete="tel"
                         type="tel"
                         className="w-full pl-12 pr-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium"
                         placeholder="+254 700 000 000"
@@ -324,6 +383,8 @@ export default function Register() {
                         <FileText size={18} />
                       </div>
                       <input
+                        name="registrationNumber"
+                        autoComplete="organization"
                         type="text"
                         className="w-full pl-12 pr-4 py-3.5 bg-[#f9fdf9] border border-gray-200 rounded-xl text-[#001e00] placeholder-gray-400 focus:outline-none focus:border-[#14a800] transition-all font-medium"
                         placeholder="BN/2024/XYZ..."
