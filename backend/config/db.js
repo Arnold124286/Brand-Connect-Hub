@@ -22,9 +22,9 @@ if (process.env.DATABASE_URL) {
   }
 }
 
-poolConfig.max = 20;
+poolConfig.max = process.env.DATABASE_URL ? 10 : 20; // limit pool size for cloud databases to avoid exceeding Neon's 10-connection limit
 poolConfig.idleTimeoutMillis = 30000;
-poolConfig.connectionTimeoutMillis = 5000; // 5 seconds connection timeout
+poolConfig.connectionTimeoutMillis = 15000; // 15 seconds connection timeout to support serverless database cold starts (Neon)
 
 const pool = new Pool(poolConfig);
 
