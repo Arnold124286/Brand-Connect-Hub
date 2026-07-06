@@ -1,59 +1,20 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
-if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
-}
+const sgMail = require('@sendgrid/mail');
 
-// ─── Transporter Initialization ──────────────────────────────────────────────
-let transporter;
+// ─── SendGrid Initialization ──────────────────────────────────────────────────
+const hasSendGridConfig = !!process.env.SENDGRID_API_KEY;
+const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER || 'no-reply@brandconnecthub.com';
 
-const hasSmtpConfig = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS;
-const hasSendGridConfig = process.env.SENDGRID_API_KEY;
-
-if (hasSmtpConfig) {
-  console.log(`✉️ Configured Custom SMTP (${process.env.EMAIL_HOST})`);
-  transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
-    secure: parseInt(process.env.EMAIL_PORT, 10) === 465, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-} else if (hasSendGridConfig) {
-  console.log('✉️ Configured SendGrid SMTP');
-  transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false,
-    auth: {
-      user: 'apikey',                          // SendGrid requires literal "apikey"
-      pass: process.env.SENDGRID_API_KEY,
-    },
-  });
+if (hasSendGridConfig) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  console.log('✉️  SendGrid Web API configured (HTTPS — no SMTP port needed)');
 } else {
-  console.log('⚠️ No email configuration found. Email service will run in DEV MODE (logging to console).');
-}
-
-// ─── Verify connection on startup ───────────────────────────────────────────
-if (transporter) {
-  transporter.verify((error) => {
-    if (error) {
-      console.error('❌ Email transporter verification error:', error.message);
-    } else {
-      console.log('✅ Email transporter is ready');
-    }
-  });
+  console.log('⚠️  No SENDGRID_API_KEY found. Email service will run in DEV MODE (logging to console).');
 }
 
 // ─── Base send function ──────────────────────────────────────────────────────
 const sendEmail = async (to, subject, html) => {
-  if (!transporter) {
-    console.log('⚠️  DEV MODE — Email transporter not set. Logging email instead:');
+  if (!hasSendGridConfig) {
+    console.log('⚠️  DEV MODE — SendGrid not configured. Logging email instead:');
     console.log('--------------------------------------------------');
     console.log(`To:      ${to}`);
     console.log(`Subject: ${subject}`);
@@ -63,18 +24,25 @@ const sendEmail = async (to, subject, html) => {
   }
 
   try {
-    const fromEmail = process.env.EMAIL_USER || process.env.SENDGRID_FROM_EMAIL || 'no-reply@brandconnecthub.com';
-    const info = await transporter.sendMail({
-      from: `"Brand Connect Hub" <${fromEmail}>`,
+    const msg = {
       to,
+      from: {
+        email: FROM_EMAIL,
+        name: 'Brand Connect Hub',
+      },
       subject,
       html,
-    });
-    console.log(`✅ Email sent to ${to} | MessageId: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    };
+
+    const [response] = await sgMail.send(msg);
+    console.log(`✅ Email sent to ${to} | Status: ${response.statusCode}`);
+    return { success: true, statusCode: response.statusCode };
   } catch (err) {
-    console.error('❌ Email sending failed:', err.message);
-    throw err; // Throw error to trigger promise rejection so catch() blocks handle it
+    const message = err.response
+      ? JSON.stringify(err.response.body)
+      : err.message;
+    console.error('❌ Email sending failed:', message);
+    throw new Error(message);
   }
 };
 
